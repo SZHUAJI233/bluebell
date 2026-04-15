@@ -1,0 +1,30 @@
+app:
+  name: "web_app"
+  mode: "dev"
+  port: 8080
+  start_time: "2025-12-01"
+  machine_id: 1
+
+log:
+  level: "debug"
+  filename: "web_app.log"
+  max_size: 200
+  max_age: 30
+  max_backups: 7
+
+mysql:
+  host: "127.0.0.1"
+  port: 3306
+  user: "root"
+  password: "123456"
+  dbname: "bluebell"
+  max_open_conns: 100     # 最大打开连接数
+  max_idle_conns: 20      # 最大空闲连接数
+  conn_max_lifetime: 300  # 连接最大存活时间(秒)
+
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  db: 0
+  password: ""
+  pool_size: 100
