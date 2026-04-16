@@ -30,7 +30,7 @@ func Init(cfg *setting.MysqlConfig) (err error) {
 	}
 
 	// 自动迁移表结构（根据Model创建/更新表）
-	db.AutoMigrate(&models.User{}, &models.Community{})
+	db.AutoMigrate(&models.User{}, &models.Community{}, &models.Post{})
 
 	// 获取底层sql.DB并设置连接池
 	sqlDB, err := db.DB()
