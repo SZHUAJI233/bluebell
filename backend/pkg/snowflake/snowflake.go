@@ -21,6 +21,6 @@ func Init(cfg *setting.AppConfig) (err error) {
 	return
 }
 
-func GenID() int64 {
-	return node.Generate().Int64()
+func GenID() uint64 {
+	return uint64(node.Generate().Int64())
 }

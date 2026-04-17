@@ -27,7 +27,7 @@ func SignUp(p *models.ParamSignUp) (err error) {
 	userID := snowflake.GenID()
 	// 构造user实例
 	u := models.User{
-		UserID:   uint(userID),
+		UserID:   uint64(userID),
 		Username: p.Username,
 		Password: p.Password,
 	}

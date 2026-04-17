@@ -17,13 +17,13 @@ const TokenExpireDuration = time.Hour * 2
 var mySercet = []byte("夏天夏天悄悄过去")
 
 type MyClaims struct {
-	UserID   uint   `json:"user_id"`
+	UserID   uint64 `json:"user_id"`
 	Username string `json:"username"`
 	jwt.StandardClaims
 }
 
 // 生成token
-func GenToken(userID uint, username string) (string, error) {
+func GenToken(userID uint64, username string) (string, error) {
 	// 创建
 	c := MyClaims{
 		UserID:   userID,
