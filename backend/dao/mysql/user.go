@@ -39,3 +39,11 @@ func GetInfoByUserName(userName string) (models.User, error) {
 		First(&user).Error
 	return user, err
 }
+
+func GetInfoByUserId(userID uint64) (models.User, error) {
+	var user models.User
+	err := db.
+		Where("user_id = ?", userID).
+		First(&user).Error
+	return user, err
+}

@@ -7,8 +7,8 @@ import (
 )
 
 type Community struct {
-	ID            uint   `gorm:"type:bigint(20);primaryKey" json:"id"`
-	CommunityID   uint   `gorm:"type:bigint(20);not null;uniqueIndex:idx_community_id" json:"community_id"`
+	ID            uint64 `gorm:"type:bigint(20);primaryKey" json:"id"`
+	CommunityID   uint64 `gorm:"type:bigint(20);not null;uniqueIndex:idx_community_id" json:"community_id"`
 	CommunityName string `gorm:"type:varchar(128);not null;uniqueIndex:idx_community_name" json:"community_name"`
 	Introduction  string `gorm:"type:varchar(256);not null" json:"introduction"`
 
@@ -18,7 +18,7 @@ type Community struct {
 }
 
 type CommunityDetail struct {
-	CommunityID   uint   `gorm:"type:bigint(20);not null;uniqueIndex:idx_community_id" json:"community_id"`
+	CommunityID   uint64 `gorm:"type:bigint(20);not null;uniqueIndex:idx_community_id" json:"community_id"`
 	CommunityName string `gorm:"type:varchar(128);not null;uniqueIndex:idx_community_name" json:"community_name"`
 	Introduction  string `gorm:"type:varchar(256);not null" json:"introduction"`
 }

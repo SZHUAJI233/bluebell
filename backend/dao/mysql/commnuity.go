@@ -20,9 +20,9 @@ func GetCommunityList() ([]*models.Community, error) {
 	return communityList, err
 }
 
-func GetCommunityDetailByID(id uint) (*models.CommunityDetail, error) {
+func GetCommunityDetailByID(id uint64) (*models.CommunityDetail, error) {
 	var communityDetail *models.CommunityDetail
-	err := db.Table("communities").Select("community_id,community_name,introduction").Where("id = ?", id).First(&communityDetail).Error
+	err := db.Table("communities").Select("community_id,community_name,introduction").Where("community_id = ?", id).First(&communityDetail).Error
 	if err != nil {
 		if err == sql.ErrNoRows {
 			zap.L().Warn("社区不存在")

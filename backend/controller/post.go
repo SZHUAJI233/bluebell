@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"strconv"
 	"web/controller/request"
 	"web/controller/response"
 	"web/models"
@@ -10,6 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// 创建帖子
 func CreatePostHandler(c *gin.Context) {
 	// 1. 获取参数及参数校验
 	p := new(models.Post)
@@ -34,4 +36,28 @@ func CreatePostHandler(c *gin.Context) {
 	}
 	// 3. 返回响应
 	response.Success(c, nil)
+}
+
+// 获取帖子详情
+func GetPostDetailHandler(c *gin.Context) {
+	// 1. 获取参数（从url中获得帖子的id）
+	pidStr := c.Param("id")
+	zap.L().Error("c.Param(id) ", zap.Any("pidStr", pidStr))
+	pid, err := strconv.ParseInt(pidStr, 10, 64)
+	zap.L().Error("strconv.ParseInt(pidStr, 10, 64) ", zap.Any("pid", pid))
+
+	if err != nil {
+		zap.L().Error("strconv.ParseInt failed: ", zap.Error(err))
+		response.Error(c, response.CodeInvalidParm)
+		return
+	}
+	// 2. 根据id取出帖子数据
+	p, err := server.GetPostDetailById(uint64(pid))
+	if err != nil {
+		zap.L().Error("server.GetPostDetailById failed: ", zap.Error(err))
+		response.Error(c, response.CodeServerBusy)
+		return
+	}
+	// 3. 返回响应
+	response.Success(c, p)
 }

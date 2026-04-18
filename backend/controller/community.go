@@ -24,7 +24,7 @@ func CommunityDetailHandler(c *gin.Context) {
 	// 获取社区ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 0)
-	uid := uint(id)
+	uid := uint64(id)
 	data, err := server.GetCommunityDetailByID(uid)
 	if err != nil {
 		zap.L().Error("server.GetCommunityList() failed", zap.Error(err))
