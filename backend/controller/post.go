@@ -61,3 +61,16 @@ func GetPostDetailHandler(c *gin.Context) {
 	// 3. 返回响应
 	response.Success(c, p)
 }
+
+// 获取帖子列表
+func GetPostListHandler(c *gin.Context) {
+	// 获取数据
+	data, err := server.GetPostList()
+	if err != nil {
+		zap.L().Error("server.GetPostList() failed: ", zap.Error(err))
+		response.Error(c, response.CodeServerBusy)
+		return
+	}
+	// 返回响应
+	response.Success(c, data)
+}

@@ -32,16 +32,16 @@ func InsertUser(user *models.User) error {
 }
 
 // 通过用户名查询用户信息
-func GetInfoByUserName(userName string) (models.User, error) {
-	var user models.User
+func GetInfoByUserName(userName string) (*models.User, error) {
+	var user *models.User
 	err := db.
 		Where("username = ?", userName).
 		First(&user).Error
 	return user, err
 }
 
-func GetInfoByUserId(userID uint64) (models.User, error) {
-	var user models.User
+func GetInfoByUserId(userID uint64) (*models.User, error) {
+	var user *models.User
 	err := db.
 		Where("user_id = ?", userID).
 		First(&user).Error
