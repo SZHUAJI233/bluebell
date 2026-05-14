@@ -21,7 +21,7 @@ func CreatePostHandler(c *gin.Context) {
 		return
 	}
 	// 从c中取出当前请求的用户id
-	userID, err := request.GetCurrentUser(c)
+	userID, err := request.GetCurrentUserID(c)
 	if err != nil {
 		zap.L().Error("request.GetCurrentUser(c)：", zap.Error(err))
 		response.Error(c, response.CodeNeedLogin)
@@ -65,20 +65,10 @@ func GetPostDetailHandler(c *gin.Context) {
 // 获取帖子列表
 func GetPostListHandler(c *gin.Context) {
 	// 获取分页参数
-	pageStr := c.Query("page")
-	sizeStr := c.Query("size")
-
-	page, err := strconv.ParseInt(pageStr, 10, 64)
+	page, size, err := request.GetPageInfo(c)
 	if err != nil {
-		zap.L().Error("strconv.ParseInt(pageStr, 10, 64) failed: ", zap.Error(err))
-		page = 1
+		zap.L().Error("server.GetPostInfo(c) failed: ", zap.Error(err))
 	}
-	size, err := strconv.ParseInt(sizeStr, 10, 64)
-	if err != nil {
-		zap.L().Error("strconv.ParseInt(sizeStr, 10, 64) failed: ", zap.Error(err))
-		size = 10
-	}
-
 	// 获取数据
 	data, err := server.GetPostList(page, size)
 	if err != nil {

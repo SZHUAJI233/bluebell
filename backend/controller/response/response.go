@@ -17,7 +17,7 @@ import (
 type Data struct {
 	Code ResCode     `json:"code"`
 	Msg  interface{} `json:"msg"`
-	Data interface{} ` json:"data"`
+	Data interface{} ` json:"data,omitempty"` // omitempty 字段为空不展示
 }
 
 func Error(c *gin.Context, code ResCode) {

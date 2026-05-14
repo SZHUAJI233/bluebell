@@ -1,7 +1,9 @@
 package server
 
 import (
+	"strconv"
 	"web/dao/mysql"
+	"web/dao/redis"
 	"web/models"
 	"web/pkg/snowflake"
 
@@ -13,6 +15,12 @@ func CreatePost(p *models.Post) (err error) {
 	p.PostID = snowflake.GenID()
 	// 2. 保存到数据库
 	if err := mysql.CreatePost(p); err != nil {
+		zap.L().Error("mysql.CreatePost(p) failed: ", zap.Error(err))
+		return err
+	}
+	// redis 记录帖子创建时间
+	if err = redis.CreatePost(strconv.Itoa(int(p.PostID))); err != nil {
+		zap.L().Error("redis.CreatePost(strconv.Itoa(int(p.PostID))) failed: ", zap.Error(err))
 		return err
 	}
 	// 3. 返回
