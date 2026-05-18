@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -41,7 +40,7 @@ func GenToken(userID uint64, username string) (string, error) {
 	}
 
 	// 存储token
-	err = redis.Set(context.Background(), "token", tokenStr, TokenExpireDuration)
+	err = redis.SetToken(tokenStr, TokenExpireDuration)
 	if err != nil {
 		return "", fmt.Errorf("redis存储token失败: %v", err)
 	}
@@ -61,7 +60,7 @@ func ParseToken(tokenString string) (*MyClaims, error) {
 	}
 	if token.Valid {
 		// 验证token
-		oldToken, err := redis.Get(context.Background(), "token")
+		oldToken, err := redis.GetToken()
 		if err != nil {
 			return nil, fmt.Errorf("redis获取token失败: %v", err)
 		} else if tokenString == oldToken {

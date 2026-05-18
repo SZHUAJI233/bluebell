@@ -79,3 +79,32 @@ func GetPostListHandler(c *gin.Context) {
 	// 返回响应
 	response.Success(c, data)
 }
+
+// 根据时间或分数获取帖子列表
+// 根据前端传来的参数（分数、创建时间、）排序
+func GetPostListHandler2(c *gin.Context) {
+	// GET请求参数： /api/v1/post2?page=1&size=10&order=time
+
+	// 获取排序参数
+	// 指定初始默认参数
+	p := &models.ParamPostList{
+		Page:  1,
+		Size:  10,
+		Order: models.OrderTime,
+	}
+
+	if err := c.ShouldBindQuery(p); err != nil {
+
+	}
+
+	// 获取数据
+	data, err := server.GetPostList2(p)
+	if err != nil {
+		zap.L().Error("server.GetPostList() failed: ", zap.Error(err))
+		response.Error(c, response.CodeServerBusy)
+		return
+	}
+
+	// 返回响应
+	response.Success(c, data)
+}

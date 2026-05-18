@@ -56,12 +56,13 @@ func GetPostDetailById(id uint64) (data *models.ApiPostDetail, err error) {
 }
 
 // 获取帖子列表
-func GetPostList(page, size int64) (data []*models.ApiPostDetail, err error) {
+func GetPostList(page, size int64) (datas []*models.ApiPostDetail, err error) {
 	postList, err := mysql.GetPostList(page, size)
 	if err != nil {
 		zap.L().Error("mysql.GetPostList() failed: ", zap.Error(err))
 	}
-	data = make([]*models.ApiPostDetail, 0, len(postList))
+
+	datas = make([]*models.ApiPostDetail, 0, len(postList))
 
 	for _, post := range postList {
 		// 根据作者id查询作者信息
@@ -85,7 +86,51 @@ func GetPostList(page, size int64) (data []*models.ApiPostDetail, err error) {
 			CommunityDetail: community,
 		}
 		// 添加到list中
-		data = append(data, postDetail)
+		datas = append(datas, postDetail)
 	}
+	return
+}
+
+// 获取帖子列表并按照参数排序
+func GetPostList2(p *models.ParamPostList) (datas []*models.ApiPostDetail, err error) {
+	// 在redis中查询id列表
+	ids, err := redis.GetPostIDsInOrder(p)
+	if err != nil {
+		return
+	}
+	if len(ids) == 0 {
+		zap.L().Warn("redis.GetPostIDsInOrder(p) return 0 data")
+	}
+
+	// 根据id在Mysql数据库中查询帖子详细信息
+	postList, err := mysql.GetPostDetailListByIds(ids)
+
+	datas = make([]*models.ApiPostDetail, 0, len(postList))
+
+	for _, post := range postList {
+		// 根据作者id查询作者信息
+		var user *models.User
+		user, err = mysql.GetInfoByUserId(post.AuthorID)
+		if err != nil {
+			zap.L().Error("mysql.GetInfoByUserId(post.AuthorID) failed: ", zap.Error(err))
+			return
+		}
+		// 根据社区id查询社区信息
+		var community *models.CommunityDetail
+		community, err = mysql.GetCommunityDetailByID(post.CommunityID)
+		if err != nil {
+			zap.L().Error("mysql.GetCommunityDetailByID(post.CommunityID) failed: ", zap.Error(err))
+			return
+		}
+		// 将信息写入api结构体
+		postDetail := &models.ApiPostDetail{
+			AuthorName:      user.Username,
+			PostDetail:      post,
+			CommunityDetail: community,
+		}
+		// 添加到list中
+		datas = append(datas, postDetail)
+	}
+
 	return
 }

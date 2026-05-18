@@ -41,14 +41,15 @@ var (
 )
 
 func CreatePost(postID string) error {
+	now := float64(time.Now().Unix())
 	pipeline := rdb.Pipeline()
 	pipeline.ZAdd(getRedisKey(KeyPostTimeZSet), redis.Z{
-		Score:  float64(time.Now().Unix()),
+		Score:  now,
 		Member: postID,
 	})
 
 	pipeline.ZAdd(getRedisKey(KeyPostScoreZSet), redis.Z{
-		Score:  0,
+		Score:  now,
 		Member: postID,
 	})
 	_, err := pipeline.Exec()
@@ -69,11 +70,15 @@ func VoteForPost(userID, postID string, vote float64) error {
 		return ErrVoteTimeExpire
 	}
 
-	// 事务
-	pipeline := rdb.TxPipeline()
 	// 2. 更新帖子分数
 	// 查询当前用户对当前帖子的原来的投票分数
-	oldVote := pipeline.ZScore(getRedisKey(KeyPostVotedZSetPrefix+postID), userID).Val()
+	oldVote, err := rdb.ZScore(getRedisKey(KeyPostVotedZSetPrefix+postID), userID).Result()
+	if err == redis.Nil {
+		oldVote = 0
+	} else if err != nil {
+		zap.L().Error("ZScore(getRedisKey(KeyPostVotedZSetPrefix+postID), userID).Result() failed: ", zap.Error(err))
+		return err
+	}
 
 	var symbol int
 	if vote > oldVote {
@@ -82,9 +87,11 @@ func VoteForPost(userID, postID string, vote float64) error {
 		symbol = -1
 	}
 
-	// 计算新旧投票差值
+	// 计算新旧投票差值	(如何新旧差值相同，则最后增加票数也为0)
 	diff := math.Abs(oldVote - vote)
 
+	// 事务
+	pipeline := rdb.TxPipeline()
 	// 更新票数
 	pipeline.ZIncrBy(getRedisKey(KeyPostScoreZSet), float64(symbol*scorePerVote)*diff, postID)
 
