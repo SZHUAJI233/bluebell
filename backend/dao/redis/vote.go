@@ -56,6 +56,24 @@ func CreatePost(postID string) error {
 	return err
 }
 
+func GetVotes(postID string) (agreeVotes, disagreeVotes int64, err error) {
+	agreeVotes, err = rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+postID), "1", "1").Result()
+	if err == redis.Nil {
+		agreeVotes = 0
+	} else if err != nil {
+		zap.L().Error(`rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+postID), "1", "1").Result() failed: `, zap.Error(err))
+		return
+	}
+	disagreeVotes, err = rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+postID), "-1", "-1").Result()
+	if err == redis.Nil {
+		disagreeVotes = 0
+	} else if err != nil {
+		zap.L().Error(`rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+postID), "-1", "-1").Result() failed: `, zap.Error(err))
+		return
+	}
+	return
+}
+
 func VoteForPost(userID, postID string, vote float64) error {
 	// 1. 判断投票的限制
 	postTime, err := rdb.ZScore(getRedisKey(KeyPostTimeZSet), postID).Result()

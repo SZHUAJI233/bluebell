@@ -3,6 +3,8 @@ package mysql
 import (
 	"strconv"
 	"web/models"
+
+	"go.uber.org/zap"
 )
 
 // 创建帖子
@@ -23,13 +25,15 @@ func GetPostDetailById(id uint64) (data *models.PostDetail, err error) {
 func GetPostDetailListByIds(ids []string) (datas []*models.PostDetail, err error) {
 	for _, id := range ids {
 
-		idStr, err := strconv.Atoi(id)
+		idInt, err := strconv.Atoi(id)
 		if err != nil {
+			zap.L().Error("strconv.Atoi(id) failed: ", zap.Error(err))
 			return nil, err
 		}
 
-		data, err := GetPostDetailById(uint64(idStr))
+		data, err := GetPostDetailById(uint64(idInt))
 		if err != nil {
+			zap.L().Error("GetPostDetailById(uint64(idStr)) failed: ", zap.Error(err), zap.Any("id: ", id))
 			return nil, err
 		}
 

@@ -65,6 +65,7 @@ func GetPostList(page, size int64) (datas []*models.ApiPostDetail, err error) {
 	datas = make([]*models.ApiPostDetail, 0, len(postList))
 
 	for _, post := range postList {
+
 		// 根据作者id查询作者信息
 		var user *models.User
 		user, err = mysql.GetInfoByUserId(post.AuthorID)
@@ -72,6 +73,7 @@ func GetPostList(page, size int64) (datas []*models.ApiPostDetail, err error) {
 			zap.L().Error("mysql.GetInfoByUserId(post.AuthorID) failed: ", zap.Error(err))
 			return
 		}
+
 		// 根据社区id查询社区信息
 		var community *models.CommunityDetail
 		community, err = mysql.GetCommunityDetailByID(post.CommunityID)
@@ -79,6 +81,17 @@ func GetPostList(page, size int64) (datas []*models.ApiPostDetail, err error) {
 			zap.L().Error("mysql.GetCommunityDetailByID(post.CommunityID) failed: ", zap.Error(err))
 			return
 		}
+
+		// 获取赞成票和反对票票数
+		var agreeVotes, disagreeVotes int64
+		agreeVotes, disagreeVotes, err = redis.GetVotes(strconv.Itoa(int(post.PostID)))
+		if err != nil {
+			zap.L().Error("redis.GetVotes(strconv.Itoa(int(post.PostID))) failed: ", zap.Error(err))
+			return
+		}
+		post.AgreeVotes = agreeVotes
+		post.DisagreeVotes = disagreeVotes
+
 		// 将信息写入api结构体
 		postDetail := &models.ApiPostDetail{
 			AuthorName:      user.Username,
@@ -96,18 +109,25 @@ func GetPostList2(p *models.ParamPostList) (datas []*models.ApiPostDetail, err e
 	// 在redis中查询id列表
 	ids, err := redis.GetPostIDsInOrder(p)
 	if err != nil {
+		zap.L().Error("redis.GetPostIDsInOrder(p) failed: ", zap.Error(err))
 		return
 	}
 	if len(ids) == 0 {
 		zap.L().Warn("redis.GetPostIDsInOrder(p) return 0 data")
+		return
 	}
 
 	// 根据id在Mysql数据库中查询帖子详细信息
 	postList, err := mysql.GetPostDetailListByIds(ids)
+	if err != nil {
+		zap.L().Error("mysql.GetPostDetailListByIds(ids) failed: ", zap.Error(err))
+		return
+	}
 
 	datas = make([]*models.ApiPostDetail, 0, len(postList))
 
 	for _, post := range postList {
+
 		// 根据作者id查询作者信息
 		var user *models.User
 		user, err = mysql.GetInfoByUserId(post.AuthorID)
@@ -115,6 +135,7 @@ func GetPostList2(p *models.ParamPostList) (datas []*models.ApiPostDetail, err e
 			zap.L().Error("mysql.GetInfoByUserId(post.AuthorID) failed: ", zap.Error(err))
 			return
 		}
+
 		// 根据社区id查询社区信息
 		var community *models.CommunityDetail
 		community, err = mysql.GetCommunityDetailByID(post.CommunityID)
@@ -122,6 +143,17 @@ func GetPostList2(p *models.ParamPostList) (datas []*models.ApiPostDetail, err e
 			zap.L().Error("mysql.GetCommunityDetailByID(post.CommunityID) failed: ", zap.Error(err))
 			return
 		}
+
+		// 获取赞成票和反对票票数
+		var agreeVotes, disagreeVotes int64
+		agreeVotes, disagreeVotes, err = redis.GetVotes(strconv.Itoa(int(post.PostID)))
+		if err != nil {
+			zap.L().Error("redis.GetVotes(strconv.Itoa(int(post.PostID))) failed: ", zap.Error(err))
+			return
+		}
+		post.AgreeVotes = agreeVotes
+		post.DisagreeVotes = disagreeVotes
+
 		// 将信息写入api结构体
 		postDetail := &models.ApiPostDetail{
 			AuthorName:      user.Username,
