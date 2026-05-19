@@ -82,16 +82,6 @@ func GetPostList(page, size int64) (datas []*models.ApiPostDetail, err error) {
 			return
 		}
 
-		// 获取赞成票和反对票票数
-		var agreeVotes, disagreeVotes int64
-		agreeVotes, disagreeVotes, err = redis.GetVotes(strconv.Itoa(int(post.PostID)))
-		if err != nil {
-			zap.L().Error("redis.GetVotes(strconv.Itoa(int(post.PostID))) failed: ", zap.Error(err))
-			return
-		}
-		post.AgreeVotes = agreeVotes
-		post.DisagreeVotes = disagreeVotes
-
 		// 将信息写入api结构体
 		postDetail := &models.ApiPostDetail{
 			AuthorName:      user.Username,
@@ -126,7 +116,15 @@ func GetPostList2(p *models.ParamPostList) (datas []*models.ApiPostDetail, err e
 
 	datas = make([]*models.ApiPostDetail, 0, len(postList))
 
-	for _, post := range postList {
+	// 获取赞成票和反对票票数
+	var agreeVotes, disagreeVotes []int64
+	agreeVotes, disagreeVotes, err = redis.GetVotes(ids)
+	if err != nil {
+		zap.L().Error("redis.GetVotes(ids) failed: ", zap.Error(err))
+		return
+	}
+
+	for index, post := range postList {
 
 		// 根据作者id查询作者信息
 		var user *models.User
@@ -144,15 +142,8 @@ func GetPostList2(p *models.ParamPostList) (datas []*models.ApiPostDetail, err e
 			return
 		}
 
-		// 获取赞成票和反对票票数
-		var agreeVotes, disagreeVotes int64
-		agreeVotes, disagreeVotes, err = redis.GetVotes(strconv.Itoa(int(post.PostID)))
-		if err != nil {
-			zap.L().Error("redis.GetVotes(strconv.Itoa(int(post.PostID))) failed: ", zap.Error(err))
-			return
-		}
-		post.AgreeVotes = agreeVotes
-		post.DisagreeVotes = disagreeVotes
+		post.AgreeVotes = agreeVotes[index]
+		post.DisagreeVotes = disagreeVotes[index]
 
 		// 将信息写入api结构体
 		postDetail := &models.ApiPostDetail{

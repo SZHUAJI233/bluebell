@@ -56,20 +56,44 @@ func CreatePost(postID string) error {
 	return err
 }
 
-func GetVotes(postID string) (agreeVotes, disagreeVotes int64, err error) {
-	agreeVotes, err = rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+postID), "1", "1").Result()
-	if err == redis.Nil {
-		agreeVotes = 0
-	} else if err != nil {
-		zap.L().Error(`rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+postID), "1", "1").Result() failed: `, zap.Error(err))
+func GetVotes(ids []string) (agreeVotes, disagreeVotes []int64, err error) {
+
+	agreeVotes = make([]int64, len(ids))
+	disagreeVotes = make([]int64, len(ids))
+
+	pipe := rdb.Pipeline()
+	agreeCmds := make([]*redis.IntCmd, len(ids)) // 数据管道
+	disagreeCmds := make([]*redis.IntCmd, len(ids))
+
+	for index, id := range ids {
+		agreeCmds[index] = pipe.ZCount(getRedisKey(KeyPostVotedZSetPrefix+id), "1", "1")
+		disagreeCmds[index] = pipe.ZCount(getRedisKey(KeyPostVotedZSetPrefix+id), "-1", "-1")
+	}
+
+	_, err = pipe.Exec()
+	if err != nil {
+		zap.L().Error("pipe.Exec() failed: ", zap.Error(err))
 		return
 	}
-	disagreeVotes, err = rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+postID), "-1", "-1").Result()
-	if err == redis.Nil {
-		disagreeVotes = 0
-	} else if err != nil {
-		zap.L().Error(`rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+postID), "-1", "-1").Result() failed: `, zap.Error(err))
-		return
+
+	for index := range ids {
+		// 赞成票
+		agreeVotes[index], err = agreeCmds[index].Result()
+		if err == redis.Nil {
+			agreeVotes[index] = 0
+		} else if err != nil {
+			zap.L().Error(`rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+id), "1", "1").Result() failed: `, zap.Error(err))
+			return
+		}
+
+		// 反对票
+		disagreeVotes[index], err = disagreeCmds[index].Result()
+		if err == redis.Nil {
+			disagreeVotes[index] = 0
+		} else if err != nil {
+			zap.L().Error(`rdb.ZCount(getRedisKey(KeyPostVotedZSetPrefix+id), "-1", "-1").Result() failed: `, zap.Error(err))
+			return
+		}
 	}
 	return
 }
