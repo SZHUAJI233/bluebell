@@ -47,7 +47,7 @@ func GetPostIDsInOrder(p *models.ParamPostList) ([]string, error) {
 	return getIDsFormKey(key, p.Page, p.Size)
 }
 
-func GetCommunityPostIDsInOrder(p *models.ParamCommunityPostList) ([]string, error) {
+func GetCommunityPostIDsInOrder(p *models.ParamPostList) ([]string, error) {
 
 	// 社区的key
 	communityKey := getRedisKey(KeyPostCommunitySetPrefix + strconv.Itoa(int(p.CommunityID)))
