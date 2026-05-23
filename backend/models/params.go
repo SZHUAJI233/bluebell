@@ -29,7 +29,14 @@ type ParamVoteData struct {
 
 //	获取帖子列表获取query string
 type ParamPostList struct {
-	Page  int64  `json:"page" form:"page"`
-	Size  int64  `json:"size" form:"size"`
-	Order string `json:"order" form:"order"`
+	CommunityID int64  `json:"community_id" form:"community_id"`
+	Page        int64  `json:"page" form:"page"`
+	Size        int64  `json:"size" form:"size"`
+	Order       string `json:"order" form:"order"`
+}
+
+// 根据社区获取帖子列表
+type ParamCommunityPostList struct {
+	*ParamPostList
+	CommunityID int64 `json:"community_id" form:"community_id"`
 }

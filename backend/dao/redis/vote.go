@@ -40,22 +40,6 @@ var (
 	ErrVoteTimeExpire = errors.New("投票时间已过")
 )
 
-func CreatePost(postID string) error {
-	now := float64(time.Now().Unix())
-	pipeline := rdb.Pipeline()
-	pipeline.ZAdd(getRedisKey(KeyPostTimeZSet), redis.Z{
-		Score:  now,
-		Member: postID,
-	})
-
-	pipeline.ZAdd(getRedisKey(KeyPostScoreZSet), redis.Z{
-		Score:  now,
-		Member: postID,
-	})
-	_, err := pipeline.Exec()
-	return err
-}
-
 func GetVotes(ids []string) (agreeVotes, disagreeVotes []int64, err error) {
 
 	agreeVotes = make([]int64, len(ids))

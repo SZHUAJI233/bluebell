@@ -1,7 +1,6 @@
 package server
 
 import (
-	"strconv"
 	"web/dao/mysql"
 	"web/dao/redis"
 	"web/models"
@@ -19,7 +18,7 @@ func CreatePost(p *models.Post) (err error) {
 		return err
 	}
 	// redis 记录帖子创建时间
-	if err = redis.CreatePost(strconv.Itoa(int(p.PostID))); err != nil {
+	if err = redis.CreatePost(p.PostID, p.CommunityID); err != nil {
 		zap.L().Error("redis.CreatePost(strconv.Itoa(int(p.PostID))) failed: ", zap.Error(err))
 		return err
 	}
@@ -104,6 +103,69 @@ func GetPostList2(p *models.ParamPostList) (datas []*models.ApiPostDetail, err e
 	}
 	if len(ids) == 0 {
 		zap.L().Warn("redis.GetPostIDsInOrder(p) return 0 data")
+		return
+	}
+
+	// 根据id在Mysql数据库中查询帖子详细信息
+	postList, err := mysql.GetPostDetailListByIds(ids)
+	if err != nil {
+		zap.L().Error("mysql.GetPostDetailListByIds(ids) failed: ", zap.Error(err))
+		return
+	}
+
+	datas = make([]*models.ApiPostDetail, 0, len(postList))
+
+	// 获取赞成票和反对票票数
+	var agreeVotes, disagreeVotes []int64
+	agreeVotes, disagreeVotes, err = redis.GetVotes(ids)
+	if err != nil {
+		zap.L().Error("redis.GetVotes(ids) failed: ", zap.Error(err))
+		return
+	}
+
+	for index, post := range postList {
+
+		// 根据作者id查询作者信息
+		var user *models.User
+		user, err = mysql.GetInfoByUserId(post.AuthorID)
+		if err != nil {
+			zap.L().Error("mysql.GetInfoByUserId(post.AuthorID) failed: ", zap.Error(err))
+			return
+		}
+
+		// 根据社区id查询社区信息
+		var community *models.CommunityDetail
+		community, err = mysql.GetCommunityDetailByID(post.CommunityID)
+		if err != nil {
+			zap.L().Error("mysql.GetCommunityDetailByID(post.CommunityID) failed: ", zap.Error(err))
+			return
+		}
+
+		post.AgreeVotes = agreeVotes[index]
+		post.DisagreeVotes = disagreeVotes[index]
+
+		// 将信息写入api结构体
+		postDetail := &models.ApiPostDetail{
+			AuthorName:      user.Username,
+			PostDetail:      post,
+			CommunityDetail: community,
+		}
+		// 添加到list中
+		datas = append(datas, postDetail)
+	}
+
+	return
+}
+
+func GetCommunityPostList(p *models.ParamCommunityPostList) (datas []*models.ApiPostDetail, err error) {
+	// 在redis中查询id列表
+	ids, err := redis.GetCommunityPostIDsInOrder(p)
+	if err != nil {
+		zap.L().Error("redis.GetCommunityPostIDsInOrder(p) failed: ", zap.Error(err))
+		return
+	}
+	if len(ids) == 0 {
+		zap.L().Warn("redis.GetCommunityPostIDsInOrder(p) return 0 data")
 		return
 	}
 

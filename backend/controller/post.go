@@ -94,11 +94,43 @@ func GetPostListHandler2(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindQuery(p); err != nil {
-
+		zap.L().Error("c.ShouldBindQuery(p) failed: ", zap.Error(err))
+		response.Error(c, response.CodeServerBusy)
+		return
 	}
 
 	// 获取数据
 	data, err := server.GetPostList2(p)
+	if err != nil {
+		zap.L().Error("server.GetPostList() failed: ", zap.Error(err))
+		response.Error(c, response.CodeServerBusy)
+		return
+	}
+
+	// 返回响应
+	response.Success(c, data)
+}
+
+// 根据社区查询帖子列表
+func GetCommunityPostListHandler(c *gin.Context) {
+	// 获取排序参数
+	// 指定初始默认参数
+	p := &models.ParamCommunityPostList{
+		ParamPostList: &models.ParamPostList{
+			Page:  1,
+			Size:  10,
+			Order: models.OrderTime,
+		},
+	}
+
+	if err := c.ShouldBindQuery(p); err != nil {
+		zap.L().Error("c.ShouldBindQuery(p) failed: ", zap.Error(err))
+		response.Error(c, response.CodeServerBusy)
+		return
+	}
+
+	// 获取数据
+	data, err := server.GetCommunityPostList(p)
 	if err != nil {
 		zap.L().Error("server.GetPostList() failed: ", zap.Error(err))
 		response.Error(c, response.CodeServerBusy)
